@@ -40,9 +40,4 @@ variable "int_port" {
     condition     = var.int_port == 1880
     error_message = "The value of internal port must be 1880."
   }
-
 }
-
-# locals {
-#   container_count = length(var.ext_port["nodered"][terraform.workspace])
-# }

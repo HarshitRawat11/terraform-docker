@@ -1,10 +1,8 @@
 resource "random_string" "random" {
-  count = var.count_in
-  length   = 4
-  special  = false
-  upper    = false
-
-  # count   = local.container_count
+  count   = var.count_in
+  length  = 4
+  special = false
+  upper   = false
 }
 
 resource "docker_container" "app_container" {
@@ -17,31 +15,30 @@ resource "docker_container" "app_container" {
     external = var.ext_port_in[count.index]
   }
 
-  volumes {
-    volume_name    = docker_volume.container_volume[count.index].name
-    container_path = var.container_path_in
-    # host_path      = var.host_path_in
+  dynamic "volumes" {
+    for_each = var.volumes_in
+
+    content {
+      volume_name    = docker_volume.container_volume[volumes.key].name
+      container_path = volumes.value["container_path_each"]
+    }
+  }
+
+  provisioner "local-exec" {
+    command = "echo ${self.name}: ${self.network_data[0]["ip_address"]}:${join("", [for x in self.ports[*]["external"] : x])} >> container.txt"
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "rm -f container.txt"
   }
 }
 
 resource "docker_volume" "container_volume" {
-  name  = "${var.name_in}-${random_string.random[count.index].result}-volume"
-  count = var.count_in
+  count = length(var.volumes_in)
+  name  = "${var.name_in}-${count.index}-volume"
 
   lifecycle {
     prevent_destroy = false
-  }
-
-  provisioner "local-exec" {
-    when = destroy
-    command = "mkdir ${path.cwd}/../backup/"
-    on_failure = continue
-  }
-
-  provisioner "local-exec" {
-    when = destroy
-    command = "sudo tar -czvf ${path.cwd}/../backup/${self.name}.tar.gz ${self.mountpoint}/"
-    on_failure = fail
-    
   }
 }

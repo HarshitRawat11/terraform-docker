@@ -14,14 +14,10 @@ variable "ext_port_in" {
   description = "external port of the container"
 }
 
-variable "container_path_in" {
-  description = "storage path of the container"
-}
-
 variable "count_in" {
   description = "count of the container"
 }
 
-# variable "host_path_in" {
-#   description = "storage path of the host"
-# }
+variable "volumes_in" {
+  description = "number of volumes for a container"
+}

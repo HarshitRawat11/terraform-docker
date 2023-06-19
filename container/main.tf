@@ -19,7 +19,7 @@ resource "docker_container" "app_container" {
     for_each = var.volumes_in
 
     content {
-      volume_name    = docker_volume.container_volume[volumes.key].name
+      volume_name    = module.volume[count.index].volume_output[volume.key]
       container_path = volumes.value["container_path_each"]
     }
   }
@@ -34,11 +34,9 @@ resource "docker_container" "app_container" {
   }
 }
 
-resource "docker_volume" "container_volume" {
-  count = length(var.volumes_in)
-  name  = "${var.name_in}-${count.index}-volume"
-
-  lifecycle {
-    prevent_destroy = false
-  }
+module "volume" {
+  source       = "./volume"
+  count        = var.count_in
+  volume_count = length(var.volumes_in)
+  volume_name  = "${var.name_in}-${terraform.workspace}-${random_string.random[count.index].result}-volume"
 }
